@@ -14,12 +14,8 @@ LearningRate = 0.75
 ImageNN = NeuralNetwork(InputSize, OutputSize,
                         NumberOfHiddenLayers, LayerSizes, LearningRate)
 
-# Input = Matrix(InputSize, 1)
-# HiddenLayers = [Matrix(LayerSizes[layer], 1)
-#                 for layer in range(NumberOfHiddenLayers)]
-# Output = Matrix(OutputSize, 1)
-
-# Input handling
+ImageNN.build()
+ImageNN.generate()
 
 TrainingData = pandas.read_csv('mnist_train.csv')
 TrainingDataImageList = TrainingData.values.tolist()
@@ -28,9 +24,17 @@ OneImage = TrainingDataImageList[0]
 Label = OneImage[0]
 ImagePixels = OneImage[1:]
 
-Temp = list(map(lambda x: round(x/255, 5), ImagePixels))
+Input = list(map(lambda x: round(x/255, 5), ImagePixels))
 expect = [0 for i in range(OutputSize)]
 expect[Label] = 1
+
+ImageNN.inject_input([Input], expect)
+
+print(ImageNN.cycle())
+print(ImageNN.cycle())
+print(ImageNN.cycle())
+print(ImageNN.cycle())
+print(ImageNN.cycle())
 
 # ImageMatrix = Matrix(1, 784)
 # ImageMatrix.set([Temp])
