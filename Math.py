@@ -45,6 +45,15 @@ class Matrix:
         Mx.set(NewMx)
         return Mx
 
+    def __mul__(self, other):
+        NewMx = self.mx.copy()
+        for y in range(self.height):
+            for x in range(self.width):
+                NewMx[y][x] = self.mx[y][x]*other
+        Mx = Matrix(self.height, self.width)
+        Mx.set(NewMx)
+        return Mx
+
     def mult_same_size(self, other):
         assert ((self.width, self.height) == other.size())
         NewMx = self.mx.copy()
@@ -132,6 +141,5 @@ class Matrix:
         print(self.mx)
 
 
-A = Matrix(3, 2)
-A.set([[1, 2], [3, 4], [5, 6]])
-A.sum_right().prt()
+a = [[10],[i for i in range(5)],[4]]
+print(a)
