@@ -139,7 +139,3 @@ class Matrix:
 
     def prt(self):
         print(self.mx)
-
-
-a = [[10],[i for i in range(5)],[4]]
-print(a)

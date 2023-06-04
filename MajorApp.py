@@ -3,9 +3,12 @@ from NeuralNetwork import NeuralNetwork
 import pandas
 import numpy as np
 
-NumberOfHiddenLayers = 2  # minimum 1
+Import = False
+Export = True
+
+NumberOfHiddenLayers = 3  # minimum 1
 InputSize = 784  # input size 784
-LayerSizes = [10, 8]  # N layer sizes
+LayerSizes = [12, 12, 10]  # N layer sizes
 OutputSize = 10
 LearningRate = 0.75
 
@@ -14,27 +17,16 @@ BatchSize = 100
 ImageNN = NeuralNetwork(InputSize, OutputSize,
                         NumberOfHiddenLayers, LayerSizes, LearningRate)
 ImageNN.build()
-ImageNN.generate()
+
+if Import == False:
+    ImageNN.generate()
+
+else:
+    ImageNN.IMPORT_DATA('./NeuralNetworkData/')
 
 TrainingData = pandas.read_csv('mnist_train.csv')
 TrainingDataImageList = TrainingData.values.tolist()
 
-print(len(TrainingDataImageList))
-
-ImageNN.EXPORT_DATA('./NeuralNetworkData/')
-
-Tester = NeuralNetwork(InputSize, OutputSize,
-                       NumberOfHiddenLayers, LayerSizes, LearningRate)
-
-Tester.build()
-Tester.IMPORT_DATA('./NeuralNetworkData/')
-
-
-A = Tester.InputWeights.get()
-B = ImageNN.InputWeights.get()
-assert (A == B)
-
-'''
 for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
     BatchAverageCost = 0
     BatchAverageInfluence = Matrix(OutputSize, 1)
@@ -60,4 +52,6 @@ for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
     print(BatchAverageCost)
 
     ImageNN.backward_propagation(BatchAverageInfluence)
-'''
+
+if Export == True:
+    ImageNN.EXPORT_DATA('./NeuralNetworkData/')
