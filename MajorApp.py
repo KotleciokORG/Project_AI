@@ -3,9 +3,9 @@ from NeuralNetwork import NeuralNetwork
 import pandas
 import numpy as np
 
-Import = True
-Export = False
 Testing = True
+Import = True if Testing else False
+Export = False if Testing else True
 
 NumberOfHiddenLayers = 3  # minimum 1
 InputSize = 784  # input size 784
