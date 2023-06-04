@@ -102,6 +102,8 @@ class NeuralNetwork:
         # Output = Output.sigm()
         self.Output = self.Output.sigm()
 
+        return self.Output
+
     def cost_function(self, output, expected):
         StartListBackProp = []
         Sum = 0

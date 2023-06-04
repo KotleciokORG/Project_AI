@@ -3,8 +3,9 @@ from NeuralNetwork import NeuralNetwork
 import pandas
 import numpy as np
 
-Import = False
-Export = True
+Import = True
+Export = False
+Testing = True
 
 NumberOfHiddenLayers = 3  # minimum 1
 InputSize = 784  # input size 784
@@ -24,15 +25,47 @@ if Import == False:
 else:
     ImageNN.IMPORT_DATA('./NeuralNetworkData/')
 
-TrainingData = pandas.read_csv('mnist_train.csv')
+if Testing == False:
+    TrainingData = pandas.read_csv('mnist_train.csv')
+else:
+    TrainingData = pandas.read_csv('mnist_test.csv')
+
 TrainingDataImageList = TrainingData.values.tolist()
 
-for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
-    BatchAverageCost = 0
-    BatchAverageInfluence = Matrix(OutputSize, 1)
-    for img in range(BatchSize):
-        PresentImageNumber = Batch*BatchSize + img
 
+if Testing == False:
+    for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
+        BatchAverageCost = 0
+        BatchAverageInfluence = Matrix(OutputSize, 1)
+        for img in range(BatchSize):
+            PresentImageNumber = Batch*BatchSize + img
+
+            OneImage = TrainingDataImageList[PresentImageNumber]
+            Label = OneImage[0]
+            ImagePixels = OneImage[1:]
+
+            Input = list(map(lambda x: round(x/255, 5), ImagePixels))
+            expect = [0 for i in range(OutputSize)]
+            expect[Label] = 1
+
+            ImageNN.inject_input([Input], expect)
+            IndividualCost, IndividualInfluence = ImageNN.forward_cost()
+
+            BatchAverageCost = BatchAverageCost + IndividualCost
+            BatchAverageInfluence = BatchAverageInfluence + IndividualInfluence
+
+        BatchAverageCost = BatchAverageCost * (1/BatchSize)
+        BatchAverageInfluence = BatchAverageInfluence * (1/BatchSize)
+        print(Batch, ' ', BatchAverageCost)
+
+        ImageNN.backward_propagation(BatchAverageInfluence)
+
+    if Export == True:
+        ImageNN.EXPORT_DATA('./NeuralNetworkData/')
+
+else:
+    Accuracy = 0
+    for PresentImageNumber in range(len(TrainingDataImageList)):
         OneImage = TrainingDataImageList[PresentImageNumber]
         Label = OneImage[0]
         ImagePixels = OneImage[1:]
@@ -42,16 +75,12 @@ for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
         expect[Label] = 1
 
         ImageNN.inject_input([Input], expect)
-        IndividualCost, IndividualInfluence = ImageNN.forward_cost()
 
-        BatchAverageCost = BatchAverageCost + IndividualCost
-        BatchAverageInfluence = BatchAverageInfluence + IndividualInfluence
-
-    BatchAverageCost = BatchAverageCost * (1/BatchSize)
-    BatchAverageInfluence = BatchAverageInfluence * (1/BatchSize)
-    print(BatchAverageCost)
-
-    ImageNN.backward_propagation(BatchAverageInfluence)
-
-if Export == True:
-    ImageNN.EXPORT_DATA('./NeuralNetworkData/')
+        Out = ImageNN.forward_propagation().transpose().get()[0]
+        LeadingValue = max(Out)
+        if Out.index(LeadingValue) == Label:
+            Accuracy += 1
+            print('GOOD')
+        else:
+            print('BAD')
+        print(round(Accuracy/(PresentImageNumber+1), 5))
