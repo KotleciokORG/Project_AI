@@ -1,6 +1,7 @@
 from Math import Matrix
 import random
 import numpy as np
+import pandas
 
 
 class NeuralNetwork:
@@ -15,10 +16,23 @@ class NeuralNetwork:
         self.LearningRate = LearningRate
 
     def build(self):
+        # Initializing Layers
         self.Input = Matrix(self.InputSize, 1)
         self.HiddenLayers = [Matrix(self.LayerSizes[layer], 1)
                              for layer in range(self.NumberOfHiddenLayers)]
         self.Output = Matrix(self.OutputSize, 1)
+
+        # Initializing Weights
+        self.InputWeights = Matrix(self.LayerSizes[0], self.InputSize)
+        self.HiddenLayersWeights = [Matrix(self.LayerSizes[layer + 1], self.LayerSizes[layer])
+                                    for layer in range(self.NumberOfHiddenLayers-1)]
+        self.OutputWeights = Matrix(self.OutputSize, self.LayerSizes[-1])
+
+        # Initializing Biases
+        self.InputBiases = Matrix(self.LayerSizes[0], 1)
+        self.HiddenLayersBiases = [Matrix(
+            self.LayerSizes[layer + 1], 1)for layer in range(self.NumberOfHiddenLayers-1)]
+        self.OutputBiases = Matrix(self.OutputSize, 1)
 
     def inject_input(self, Input, Expectation):
         # Arguments as matrices/lists
@@ -29,7 +43,7 @@ class NeuralNetwork:
 
     def generate(self):
         # Generating random weights
-        # x is for first and y is for second, so in the Matrices it should be reversed
+        # x is for first Layer and y is for second Layer, so in the Matrices it should be reversed
         StartingInputWeights = [[round(random.random(), 5)
                                 for x in range(self.InputSize)] for y in range(self.LayerSizes[0])]
         StartingHiddenLayersWeights = [[[round(random.random(), 5)
@@ -48,30 +62,22 @@ class NeuralNetwork:
         # Weights and Biases are owned by the first layers, except for the last that are owned by the output layer
         # So the last hidden layer "has no weights" beacouse its owned by the output layer
 
-        # Initializing Weights in Matrices
-        self.InputWeights = Matrix(self.LayerSizes[0], self.InputSize)
+        # Setting Weights
         self.InputWeights.set(StartingInputWeights)
 
-        self.HiddenLayersWeights = [Matrix(self.LayerSizes[layer + 1], self.LayerSizes[layer])
-                                    for layer in range(self.NumberOfHiddenLayers-1)]
         for layer in range(self.NumberOfHiddenLayers-1):
             self.HiddenLayersWeights[layer].set(
                 StartingHiddenLayersWeights[layer])
 
-        self.OutputWeights = Matrix(self.OutputSize, self.LayerSizes[-1])
         self.OutputWeights.set(StartingOutputWeights)
 
-        # Initializing Biases in Matrices
-        self.InputBiases = Matrix(self.LayerSizes[0], 1)
+        # Setting Biases
         self.InputBiases.set(StartingInputBiases)
 
-        self.HiddenLayersBiases = [Matrix(self.LayerSizes[layer + 1], 1)
-                                   for layer in range(self.NumberOfHiddenLayers-1)]
         for layer in range(self.NumberOfHiddenLayers-1):
             self.HiddenLayersBiases[layer].set(
                 StartingHiddenLayersBiases[layer])
 
-        self.OutputBiases = Matrix(self.OutputSize, 1)
         self.OutputBiases.set(StartingOutputBiases)
 
     def forward_propagation(self):
@@ -166,10 +172,72 @@ class NeuralNetwork:
         UpdatedLayerInfluenceBackwards = self.Input + \
             InputWeightsGradient.transpose().sum_right()
 
-    def cycle(self):
+    def forward_cost(self):
         self.forward_propagation()
         Cost, StartBackProp = self.cost_function(
             self.Output.get(), self.expect)
+        return Cost, StartBackProp
 
-        self.backward_propagation(StartBackProp)
-        return Cost
+    def EXPORT_DATA(self, path):
+        dfInputWeights = pandas.DataFrame.from_records(self.InputWeights.get())
+        dfInputWeights.to_csv(path + 'InputWeights.csv',
+                              index=False)
+
+        for Layer in range(self.NumberOfHiddenLayers - 1):
+            dfHiddenLayersWeights = pandas.DataFrame.from_records(
+                self.HiddenLayersWeights[Layer].get())
+            dfHiddenLayersWeights.to_csv(path + 'HiddenLayersWeights_'+str(Layer)+'.csv',
+                                         index=False)
+
+        dfOutputWeights = pandas.DataFrame.from_records(
+            self.OutputWeights.get())
+        dfOutputWeights.to_csv(path + 'OutputWeights.csv',
+                               index=False)
+
+        dfInputBiases = pandas.DataFrame.from_records(self.InputBiases.get())
+        dfInputBiases.to_csv(path + 'InputBiases.csv',
+                             index=False)
+
+        for Layer in range(self.NumberOfHiddenLayers - 1):
+            dfHiddenLayersBiases = pandas.DataFrame.from_records(
+                self.HiddenLayersBiases[Layer].get())
+            dfHiddenLayersBiases.to_csv(path + 'HiddenLayersBiases_'+str(Layer)+'.csv',
+                                        index=False)
+
+        dfOutputBiases = pandas.DataFrame.from_records(
+            self.OutputBiases.get())
+        dfOutputBiases.to_csv(path + 'OutputBiases.csv',
+                              index=False)
+
+    def IMPORT_DATA(self, path):
+        dfInputWeights = pandas.read_csv(
+            path + 'InputWeights.csv').values.tolist()
+
+        self.InputWeights.set(dfInputWeights)
+
+        for Layer in range(self.NumberOfHiddenLayers - 1):
+            dfHiddenLayersWeights = pandas.read_csv(
+                path + 'HiddenLayersWeights_'+str(Layer)+'.csv').values.tolist()
+
+            self.HiddenLayersWeights[Layer].set(dfHiddenLayersWeights)
+
+        dfOutputWeights = pandas.read_csv(
+            path + 'OutputWeights.csv').values.tolist()
+
+        self.OutputWeights.set(dfOutputWeights)
+
+        dfInputBiases = pandas.read_csv(
+            path + 'InputBiases.csv').values.tolist()
+
+        self.InputBiases.set(dfInputBiases)
+
+        for Layer in range(self.NumberOfHiddenLayers - 1):
+            dfHiddenLayersBiases = pandas.read_csv(
+                path + 'HiddenLayersBiases_'+str(Layer)+'.csv').values.tolist()
+
+            self.HiddenLayersBiases[Layer].set(dfHiddenLayersBiases)
+
+        dfOutputBiases = pandas.read_csv(
+            path + 'OutputBiases.csv').values.tolist()
+
+        self.OutputBiases.set(dfOutputBiases)
