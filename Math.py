@@ -9,6 +9,14 @@ def derivative_of_sigmoid(x):
     return round(np.exp(x)/((np.exp(x)+1)**2), 5)
 
 
+def activate_func(x):
+    return sigmoid(x)
+
+
+def derivative_of_activate_func(x):
+    return derivative_of_sigmoid(x)
+
+
 class Matrix:
     def __init__(self, height, width):
         self.height = height
@@ -115,7 +123,7 @@ class Matrix:
         self.before_activate_function_mx = self.mx.copy()
         for y in range(self.height):
             for x in range(self.width):
-                Mx[y, x] = sigmoid(Mx[y, x])
+                Mx[y, x] = activate_func(Mx[y, x])
         return Mx
 
     def der_of_activate_function(self):
@@ -123,7 +131,7 @@ class Matrix:
         self.before_activate_function_mx = self.mx.copy()
         for y in range(self.height):
             for x in range(self.width):
-                Mx[y, x] = derivative_of_sigmoid(Mx[y, x])
+                Mx[y, x] = derivative_of_activate_func(Mx[y, x])
         return Mx
 
     def clear(self):
