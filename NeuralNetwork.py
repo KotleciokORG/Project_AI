@@ -5,15 +5,13 @@ import pandas
 
 
 class NeuralNetwork:
-    def __init__(self, InputSize, OutputSize, NumberOfHiddenLayers, LayerSizes, LearningRate):
+    def __init__(self, InputSize, OutputSize, NumberOfHiddenLayers, LayerSizes):
         assert (NumberOfHiddenLayers >= 1)
         self.NumberOfHiddenLayers = NumberOfHiddenLayers  # minimum 1
 
         self.InputSize = InputSize  # input size 784
         self.LayerSizes = LayerSizes  # N layer sizes
         self.OutputSize = OutputSize
-
-        self.LearningRate = LearningRate
 
     def build(self):
         # Initializing Layers
@@ -33,6 +31,20 @@ class NeuralNetwork:
         self.HiddenLayersBiases = [Matrix(
             self.LayerSizes[layer + 1], 1)for layer in range(self.NumberOfHiddenLayers-1)]
         self.OutputBiases = Matrix(self.OutputSize, 1)
+
+        self.GradientCounter = 0
+        # Initializing Weights Gradients
+        self.InputWeightsGradients = Matrix(self.LayerSizes[0], self.InputSize)
+        self.HiddenLayersWeightsGradients = [Matrix(self.LayerSizes[layer + 1], self.LayerSizes[layer])
+                                             for layer in range(self.NumberOfHiddenLayers-1)]
+        self.OutputWeightsGradients = Matrix(
+            self.OutputSize, self.LayerSizes[-1])
+
+        # Initializing Biases Gradients
+        self.InputBiasesGradients = Matrix(self.LayerSizes[0], 1)
+        self.HiddenLayersBiasesGradients = [Matrix(
+            self.LayerSizes[layer + 1], 1)for layer in range(self.NumberOfHiddenLayers-1)]
+        self.OutputBiasesGradients = Matrix(self.OutputSize, 1)
 
     def inject_input(self, Input, Expectation):
         # Arguments as matrices/lists
@@ -119,23 +131,17 @@ class NeuralNetwork:
         # UpdatedLayerInfluenceBackwards is at the start the influence that the Output layer has on the Cost
         # and its going through all the neuron layers
 
-        # Bias2Gradient = Output.before_activate_function().der_of_activate_function().mult_same_size(UpdatedLayerInfluenceBackwards)
         OutputBiasesGradient = self.Output.before_activate_function().der_of_activate_function(
         ).mult_same_size(UpdatedLayerInfluenceBackwards)
         # Here the before_sigmation layer should be on the same level as the UpdatedLayerInfluenceBackwards
 
-        # Bias2 = Bias2 - Bias2Gradient*LearningRate
-        self.OutputBiases = self.OutputBiases - OutputBiasesGradient*self.LearningRate
+        self.OutputBiasesGradients = self.OutputBiasesGradients + OutputBiasesGradient
 
-        # Weight2Gradient = Bias2Gradient.dot(Hidden1.transpose())
         OutputWeightsGradient = OutputBiasesGradient.dot(
             self.HiddenLayers[-1].transpose())
 
-        # Weight2 = Weight2 - Weight2Gradient*LearningRate  # first updated
-        self.OutputWeights = self.OutputWeights - \
-            OutputWeightsGradient*self.LearningRate
+        self.OutputWeightsGradients = self.OutputWeightsGradients + OutputWeightsGradient
 
-        # UpdatedLayerInfluenceBackwards = Hidden1 + Weight2Gradient.transpose().sum_right()
         UpdatedLayerInfluenceBackwards = self.HiddenLayers[-1] + \
             OutputWeightsGradient.transpose().sum_right()
 
@@ -144,36 +150,62 @@ class NeuralNetwork:
             HiddenBiasesGradient = self.HiddenLayers[layer].before_activate_function().der_of_activate_function(
             ).mult_same_size(UpdatedLayerInfluenceBackwards)
 
-            self.HiddenLayersBiases[layer-1] = self.HiddenLayersBiases[layer -
-                                                                       1] - HiddenBiasesGradient*self.LearningRate
+            self.HiddenLayersBiasesGradients[layer-1] = self.HiddenLayersBiasesGradients[layer -
+                                                                                         1] + HiddenBiasesGradient
 
-            # Weight2Gradient = Bias2Gradient.dot(Hidden1.transpose())
-            # OutputWeightsGradient = OutputBiasesGradient.dot(
-            # HiddenLayers[-1].transpose())
             HiddenWeightsGradient = HiddenBiasesGradient.dot(
                 self.HiddenLayers[layer-1].transpose())
 
-            self.HiddenLayersWeights[layer-1] = self.HiddenLayersWeights[layer -
-                                                                         1] - HiddenWeightsGradient*self.LearningRate
+            self.HiddenLayersWeightsGradients[layer-1] = self.HiddenLayersWeightsGradients[layer -
+                                                                                           1] + HiddenWeightsGradient
 
             UpdatedLayerInfluenceBackwards = self.HiddenLayers[layer-1] + \
                 HiddenWeightsGradient.transpose().sum_right()
 
-        # Bias1Gradient = Hidden1.before_activate_function().der_of_activate_function().mult_same_size(UpdatedLayerInfluenceBackwards)
         InputBiasesGradient = self.HiddenLayers[0].before_activate_function().der_of_activate_function().mult_same_size(
             UpdatedLayerInfluenceBackwards)
 
-        # Bias1 = Bias1 - Bias1Gradient*LearningRate
-        self.InputBiases = self.InputBiases - InputBiasesGradient*self.LearningRate
+        self.InputBiasesGradients = self.InputBiasesGradients + InputBiasesGradient
 
-        # Weight1Gradient = Bias1Gradient.dot(Input.transpose())
         InputWeightsGradient = InputBiasesGradient.dot(self.Input.transpose())
 
-        # Weight1 = Weight1 - Weight1Gradient*LearningRate  # second updated
-        self.InputWeights = self.InputWeights - InputWeightsGradient*self.LearningRate
+        self.InputWeightsGradients = self.InputWeightsGradients + InputWeightsGradient
 
         UpdatedLayerInfluenceBackwards = self.Input + \
             InputWeightsGradient.transpose().sum_right()
+
+        self.GradientCounter += 1
+
+    def update_network(self, LearningRate):
+        self.InputWeights = self.InputWeights - self.InputWeightsGradients * \
+            (1/self.GradientCounter) * LearningRate
+        self.OutputWeights = self.OutputWeights - \
+            self.OutputWeightsGradients * \
+            (1/self.GradientCounter) * LearningRate
+
+        self.InputBiases = self.InputBiases-self.InputBiasesGradients * \
+            (1/self.GradientCounter) * LearningRate
+        self.OutputBiases = self.OutputBiases - self.OutputBiasesGradients * \
+            (1/self.GradientCounter) * LearningRate
+
+        for layer in range(self.NumberOfHiddenLayers-1):
+            self.HiddenLayersWeights[layer] = self.HiddenLayersWeights[layer] - \
+                self.HiddenLayersWeightsGradients[layer] * \
+                (1/self.GradientCounter) * LearningRate
+            self.HiddenLayersBiases[layer] = self.HiddenLayersBiases[layer] - \
+                self.HiddenLayersBiasesGradients[layer] * \
+                (1/self.GradientCounter) * LearningRate
+
+        self.GradientCounter = 0
+        self.InputWeightsGradients.clear()
+        self.OutputWeightsGradients.clear()
+
+        self.InputBiasesGradients.clear()
+        self.OutputBiasesGradients.clear()
+
+        for layer in range(self.NumberOfHiddenLayers-1):
+            self.HiddenLayersWeightsGradients[layer].clear()
+            self.HiddenLayersBiasesGradients[layer].clear()
 
     def forward_cost(self):
         self.forward_propagation()

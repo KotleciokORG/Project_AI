@@ -126,6 +126,11 @@ class Matrix:
                 Mx[y, x] = derivative_of_sigmoid(Mx[y, x])
         return Mx
 
+    def clear(self):
+        self.mx = [[0 for x in range(self.width)] for y in range(self.height)]
+        self.before_activate_function_mx = [
+            [0 for x in range(self.width)] for y in range(self.height)]
+
     def sum_right(self):
         Ret = []
         Mx = Matrix(self.height, 1)
