@@ -85,22 +85,23 @@ class NeuralNetwork:
         self.HiddenLayers[0] = self.InputWeights.dot(self.Input)
         # Hidden1 = Hidden1+Bias1
         self.HiddenLayers[0] = self.HiddenLayers[0] + self.InputBiases
-        # Hidden1 = Hidden1.sigm()
-        self.HiddenLayers[0] = self.HiddenLayers[0].sigm()
+        # Hidden1 = Hidden1.activate_function()
+        self.HiddenLayers[0] = self.HiddenLayers[0].activate_function()
 
         for layer in range(self.NumberOfHiddenLayers - 1):
             self.HiddenLayers[layer+1] = self.HiddenLayersWeights[layer].dot(
                 self.HiddenLayers[layer])
             self.HiddenLayers[layer+1] = self.HiddenLayers[layer+1] + \
                 self.HiddenLayersBiases[layer]
-            self.HiddenLayers[layer+1] = self.HiddenLayers[layer+1].sigm()
+            self.HiddenLayers[layer +
+                              1] = self.HiddenLayers[layer+1].activate_function()
 
         # Output = Weight2.dot(Hidden1)
         self.Output = self.OutputWeights.dot(self.HiddenLayers[-1])
         # Output = Output+Bias2
         self.Output = self.Output + self.OutputBiases
-        # Output = Output.sigm()
-        self.Output = self.Output.sigm()
+        # Output = Output.activate_function()
+        self.Output = self.Output.activate_function()
 
         return self.Output
 
@@ -118,8 +119,8 @@ class NeuralNetwork:
         # UpdatedLayerInfluenceBackwards is at the start the influence that the Output layer has on the Cost
         # and its going through all the neuron layers
 
-        # Bias2Gradient = Output.before_sigm().der_of_sigm().mult_same_size(UpdatedLayerInfluenceBackwards)
-        OutputBiasesGradient = self.Output.before_sigm().der_of_sigm(
+        # Bias2Gradient = Output.before_activate_function().der_of_activate_function().mult_same_size(UpdatedLayerInfluenceBackwards)
+        OutputBiasesGradient = self.Output.before_activate_function().der_of_activate_function(
         ).mult_same_size(UpdatedLayerInfluenceBackwards)
         # Here the before_sigmation layer should be on the same level as the UpdatedLayerInfluenceBackwards
 
@@ -140,7 +141,7 @@ class NeuralNetwork:
 
         for layer in range(self.NumberOfHiddenLayers-1, 0, -1):
             assert (layer != 0)
-            HiddenBiasesGradient = self.HiddenLayers[layer].before_sigm().der_of_sigm(
+            HiddenBiasesGradient = self.HiddenLayers[layer].before_activate_function().der_of_activate_function(
             ).mult_same_size(UpdatedLayerInfluenceBackwards)
 
             self.HiddenLayersBiases[layer-1] = self.HiddenLayersBiases[layer -
@@ -158,8 +159,8 @@ class NeuralNetwork:
             UpdatedLayerInfluenceBackwards = self.HiddenLayers[layer-1] + \
                 HiddenWeightsGradient.transpose().sum_right()
 
-        # Bias1Gradient = Hidden1.before_sigm().der_of_sigm().mult_same_size(UpdatedLayerInfluenceBackwards)
-        InputBiasesGradient = self.HiddenLayers[0].before_sigm().der_of_sigm().mult_same_size(
+        # Bias1Gradient = Hidden1.before_activate_function().der_of_activate_function().mult_same_size(UpdatedLayerInfluenceBackwards)
+        InputBiasesGradient = self.HiddenLayers[0].before_activate_function().der_of_activate_function().mult_same_size(
             UpdatedLayerInfluenceBackwards)
 
         # Bias1 = Bias1 - Bias1Gradient*LearningRate

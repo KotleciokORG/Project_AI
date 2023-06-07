@@ -3,15 +3,17 @@ from NeuralNetwork import NeuralNetwork
 import pandas
 import numpy as np
 
-Testing = True
-Import = True if Testing else False
-Export = False if Testing else True
+# Test - 1
+# Train - 0
+Testing_Training = 0
+Import = True if Testing_Training else False
+Export = False if Testing_Training else True
 
-NumberOfHiddenLayers = 3  # minimum 1
+NumberOfHiddenLayers = 2  # minimum 1
 InputSize = 784  # input size 784
-LayerSizes = [12, 12, 10]  # N layer sizes
+LayerSizes = [16, 16]  # N layer sizes
 OutputSize = 10
-LearningRate = 0.75
+LearningRate = 0.2
 
 BatchSize = 100
 
@@ -25,7 +27,7 @@ if Import == False:
 else:
     ImageNN.IMPORT_DATA('./NeuralNetworkData/')
 
-if Testing == False:
+if Testing_Training == False:
     TrainingData = pandas.read_csv('mnist_train.csv')
 else:
     TrainingData = pandas.read_csv('mnist_test.csv')
@@ -33,7 +35,7 @@ else:
 TrainingDataImageList = TrainingData.values.tolist()
 
 
-if Testing == False:
+if Testing_Training == False:
     for Batch in range(round(len(TrainingDataImageList)/BatchSize)):
         BatchAverageCost = 0
         BatchAverageInfluence = Matrix(OutputSize, 1)

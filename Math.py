@@ -14,7 +14,7 @@ class Matrix:
         self.height = height
         self.width = width
         self.mx = [[0 for x in range(self.width)] for y in range(self.height)]
-        self.before_sigm_mx = [
+        self.before_activate_function_mx = [
             [0 for x in range(self.width)] for y in range(self.height)]
 
     def __getitem__(self, pos):
@@ -105,22 +105,22 @@ class Matrix:
         Mx.set(Trans)
         return Mx
 
-    def before_sigm(self):
+    def before_activate_function(self):
         Mx = Matrix(self.height, self.width)
-        Mx.set(self.before_sigm_mx)
+        Mx.set(self.before_activate_function_mx)
         return Mx
 
-    def sigm(self):
+    def activate_function(self):
         Mx = self.copy()
-        self.before_sigm_mx = self.mx.copy()
+        self.before_activate_function_mx = self.mx.copy()
         for y in range(self.height):
             for x in range(self.width):
                 Mx[y, x] = sigmoid(Mx[y, x])
         return Mx
 
-    def der_of_sigm(self):
+    def der_of_activate_function(self):
         Mx = self.copy()
-        self.before_sigm_mx = self.mx.copy()
+        self.before_activate_function_mx = self.mx.copy()
         for y in range(self.height):
             for x in range(self.width):
                 Mx[y, x] = derivative_of_sigmoid(Mx[y, x])
